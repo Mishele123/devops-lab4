@@ -65,9 +65,25 @@
         enabled: yes
         state: started
 
+    - name: Healthcheck via HTTP
+      uri:
+        url: "http://127.0.0.1:8000/"
+        status_code: 200
+        timeout: 5
+      register: health_check
+      retries: 6
+      delay: 5
+      until: health_check.status == 200
+
+    - name: Show healthcheck result
+      debug:
+        msg: "Service is healthy (HTTP {{ health_check.status }})"
+
   handlers:
     - name: restart lab4-service
       systemd:
         name: lab4-service
         state: restarted
         daemon_reload: yes
+
+
