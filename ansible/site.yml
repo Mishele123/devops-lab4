@@ -1,0 +1,73 @@
+---
+- name: Deploy lab4
+  hosts: lab4
+  become: yes
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - python3
+          - python3-venv
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Create service directory
+      file:
+        path: /opt/lab4-service
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Create html subdirectory
+      file:
+        path: /opt/lab4-service/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Copy index.html
+      copy:
+        src: ../index.html
+        dest: /opt/lab4-service/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Copy service.sh
+      copy:
+        src: ../service.sh
+        dest: /opt/lab4-service/html/service.sh
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Copy systemd unit file
+      copy:
+        src: ../lab4-service.service
+        dest: /etc/systemd/system/lab4-service.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart lab4-service
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start service
+      systemd:
+        name: lab4-service
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: restart lab4-service
+      systemd:
+        name: lab4-service
+        state: restarted
+        daemon_reload: yes
